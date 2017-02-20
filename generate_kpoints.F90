@@ -2,12 +2,15 @@ MODULE global
    IMPLICIT NONE
    !Setup
    INTEGER, PARAMETER :: nptk=2000 !The num. k-points desired (roughly)
-   !Generate points only inside 1st BZ? If .false. generate in the 
+   !Generate points only inside 1st BZ? If .false. generate in the
    ! paralelogram determined by b1 and b2
    LOGICAL, PARAMETER :: firstBZ=.TRUE.
    !Lattice definition
-   REAL(KIND=8), PARAMETER :: a1(2)=[0.5d0, SQRT(3.d0)/2.d0]
-   REAL(KIND=8), PARAMETER :: a2(2)=[0.5d0,-SQRT(3.d0)/2.d0]
+!   REAL(KIND=8), PARAMETER :: a1(2)=[0.5d0, SQRT(3.d0)/2.d0]
+!   REAL(KIND=8), PARAMETER :: a2(2)=[0.5d0,-SQRT(3.d0)/2.d0]
+    REAL(KIND=8), PUBLIC :: a1(2)=[0.5d0, SQRT(3.d0)/2.d0]
+    REAL(KIND=8), PUBLIC :: a2(2)=[0.5d0,-SQRT(3.d0)/2.d0]
+
    !Globals, constants and non-ajustables
    REAL(KIND=8), PARAMETER :: pi=2.d0*ASIN(1.d0)
    !eff_nptk = effective num. k-points. nptk is only a start point.
@@ -18,11 +21,11 @@ END MODULE global
 
 SUBROUTINE generate_kpoints()
    !This sub generates kpoints in the BZ. If firstBZ is .TRUE. it will
-   ! be generated inside of the 1st BZ, otherwise in the parelogram 
+   ! be generated inside of the 1st BZ, otherwise in the parelogram
    ! determined by b1 and b2.
    !Author: Flaviano José dos Santos, Dec. 2015
-   !Institution: Forschungszentrum Jülich 
-   
+   !Institution: Forschungszentrum Jülich
+
    !INTEND:          in  in  in    out       out  out   in  in
    USE global, ONLY: a1, a2, nptk, eff_nptk, kbz, wkbz, pi, firstBZ
    IMPLICIT NONE
@@ -39,7 +42,7 @@ SUBROUTINE generate_kpoints()
    nptk_perdim=nptk_perdim*6
    eff_nptk=nptk_perdim**2
    ALLOCATE( iniwkbz(eff_nptk), inikbz(eff_nptk,2) )
-   
+
    !Reciprocal lattice determination
    b1(:)=        [a2(2),-a2(1)]
    b1(:)=2.d0*pi*[a2(2),-a2(1)]/DOT_PRODUCT(a1,b1)
@@ -82,7 +85,7 @@ SUBROUTINE generate_kpoints()
          END DO
          !Checks if the kpoint is in the border between two or more
          ! BZ's. If yes, create a clone of it to translate later into
-         ! the 1st BZ. 
+         ! the 1st BZ.
          DO j=1, 4
             diff=inikbz(l,:)-BZ(j,:)
             distance=SQRT(DOT_PRODUCT(diff,diff))
@@ -115,7 +118,7 @@ SUBROUTINE generate_kpoints()
    END IF
    wkbz=wkbz/DBLE(eff_nptk)
    eff_nptk=eff_nptk+numextrakbz
-   
+
    PRINT *, "firstBZ = ", firstBZ
    PRINT "(a,i0,a,i0)", "nptk=",eff_nptk,"  nptk_perdim=",nptk_perdim
 END SUBROUTINE generate_kpoints
