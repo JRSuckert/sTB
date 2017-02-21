@@ -121,7 +121,7 @@ CONTAINS
     INTEGER,                     INTENT(IN)  :: n, layers
     REAL*8,                      INTENT(IN)  :: vec1(2), vec2(2)
     DOUBLE COMPLEX, ALLOCATABLE, INTENT(OUT) :: H(:,:)
-    REAL*8 :: Energy = 3.3
+    REAL*8 :: Energy = 0.0
     REAL*8,    ALLOCATABLE :: t(:,:,:), nn(:,:), k(:,:)
     DOUBLE COMPLEX, ALLOCATABLE :: t_k(:,:)
 
@@ -142,9 +142,9 @@ CONTAINS
     END DO
     H = H / layers
 
-    DO i=1, layers
-      WRITE(*, *) H(:, i)
-    END DO
+    ! DO i=1, layers
+    !   WRITE(*, *) H(:, i)
+    ! END DO
 
   END SUBROUTINE
 
@@ -152,34 +152,48 @@ CONTAINS
     DOUBLE COMPLEX, INTENT(IN) :: H(n,n), z
     DOUBLE COMPLEX, ALLOCATABLE, INTENT(OUT) :: G(:,:)
     DOUBLE COMPLEX, ALLOCATABLE :: Hz(:,:)
+    DOUBLE COMPLEX :: Tr
     INTEGER, INTENT(IN) :: sites
-    INTEGER :: i,j, info
-    INTEGER :: ipiv(n), lwork, work(40*n)
-
+    INTEGER :: i,j, info, sites_loc
+    INTEGER :: ipiv(n), lwork, work(2*n)
+    REAL :: start, finish
     ALLOCATE(G(n,n), Hz(n,n))
-    lwork = 40*n
-    ! G = 0.0
-    ! DO i = 1,n
-    !   G(i,i) = 1.0
-    !   Hz(i,i) = z - H(i,i)
-    ! END DO
-
-    !CALL CPBTRF('U', n, sites, Hz, n, info)
-    !CALL CPBTRS('U', n, sites, n, Hz, n, G, n, info)
-    G = H
-    DO i=1,n
-      G(i,i) = G(i,i) - z
+    lwork = 2*n
+    G = 0.0
+    Hz = -H
+    DO i = 1,n
+      G(i,i) = 1.0
+      Hz(i,i) = z- H(i,i)
     END DO
 
-    CALL ZGETRF(n, n, G, n, ipiv, info)
+    CALL ZGETRF(n, n, Hz, n, ipiv, info)
+    CALL ZGETRS('N', n, n, Hz, n, ipiv, G, n, info)
 
-    CALL ZGETRI(n, G, n, ipiv, work, lwork, info)
+    ! G = H
+    ! DO i=1,n
+    !   G(i,i) = G(i,i) - z
+    ! END DO
+    ! print *, " -", n
+    ! call cpu_time(start)
+    ! CALL ZGETRF(n, n, G, n, ipiv, info)
+    ! print *, info
+    ! CALL ZGETRI(n, G, n, ipiv, work, lwork, info)
+    ! print *, info
+    ! call cpu_time(finish)
+    ! print *, finish - start
+    ! print *, n
+    !
+    Tr = 0.0
     PRINT *, " "
     DO i=1, n
-        PRINT *,  G(:, i)
+      Tr = Tr + G(i, i)
     END DO
+    PRINT *, Tr
 
   END SUBROUTINE
+
+!  SUBROUTINE occupation_number(n, N, EF, G):
+
 
 END MODULE sTB
 
@@ -191,7 +205,7 @@ PROGRAM neighbours
   DOUBLE COMPLEX, ALLOCATABLE :: H0(:,:)
   DOUBLE COMPLEX, ALLOCATABLE :: G(:,:)
   DOUBLE COMPLEX, ALLOCATABLE :: Ident(:,:)
-  DOUBLE COMPLEX :: E = 3.0
+  DOUBLE COMPLEX :: E = 0
   DOUBLE COMPLEX :: One = 1.0
 ! n = 1 -> 4 neighbours (4)
 ! n = 2 -> 12 neighbours (8)
@@ -203,8 +217,8 @@ PROGRAM neighbours
 ! find all x,y s.th. |x| + |y| = k
 !
 
-  n = 1
-  layers = 4
+  n = 5
+  layers = 5
 
   vec1(1) = 1
   vec1(2) = 0
@@ -217,12 +231,10 @@ PROGRAM neighbours
   CALL build_H0(n, layers, vec1, vec2, H0)
   CALL calc_green(layers, n, H0, E, G)
 
-  CALL CGEMM('N', 'N', layers, layers, layers, One, H0, layers, G, layers, One, Ident, layers)
+  CALL ZGEMM('N', 'N', layers, layers, layers, One, H0, layers, G, layers, One, Ident, layers)
 
-  PRINT *, " "
-  DO i=1, layers
-    WRITE(*, *) Ident(:, i)
-  END DO
-
+  ! DO i = 1, layers
+  !   PRINT *, Ident(:,i)
+  ! END DO
 
 END PROGRAM neighbours
