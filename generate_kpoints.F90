@@ -1,7 +1,7 @@
 MODULE global
    IMPLICIT NONE
    !Setup
-   INTEGER, PARAMETER :: nptk=2000 !The num. k-points desired (roughly)
+   INTEGER, PARAMETER :: nptk=4000 !The num. k-points desired (roughly)
    !Generate points only inside 1st BZ? If .false. generate in the
    ! paralelogram determined by b1 and b2
    LOGICAL, PARAMETER :: firstBZ=.TRUE.
